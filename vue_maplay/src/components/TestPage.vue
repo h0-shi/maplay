@@ -1,57 +1,157 @@
 <template>
-  <div class="map__wrapper">
-      <p>OSM MAP PAGE</p>
-      // 1. 지도 렌더 타겟 div 선언
-      <div class="map" ref="map"></div>
+  <div class="wrapper">
+    <div class="side-nav">
+      <v-btn
+        dark
+        depressed
+        @click="getCurrentPosition()"
+      > 위치 정보 확인</v-btn>
+      <div>
+        {{ isPostionReady ? 'yes' : 'no'}}
+        <hr>
+        {{  this.positionObj.longitude }} / {{ this.positionObj.latitude }}
+        <hr>
+        <v-btn
+          @click="transferLonlat(this.positionObj.longitude, this.positionObj.latitude)"
+        >
+          lonlet 치환
+        </v-btn>
+        {{  this.lonlet }}
+      </div>
+      <hr>
+      <v-btn
+        @click="centerAlert()"
+      >
+        센터
+      </v-btn>
+    </div>
+    <div class="main-map" ref="map">
+    </div>
   </div>
 </template>
 
 <script>
-import OlLayerTile from 'ol/layer/Tile.js'
-import OlView from 'ol/View.js'
-import OlMap from 'ol/Map.js'
-import OSM from 'ol/source/OSM'
-import { fromLonLat } from 'ol/proj.js'
+import OlLayerTile from 'ol/layer/Tile.js';
+import OlView from 'ol/View.js';
+import OlMap from 'ol/Map.js';
+import OSM from 'ol/source/OSM';
 
-import { ref, onMounted } from 'vue'
+import {fromLonLat} from 'ol/proj.js'
+/*
+import Feature from 'ol';
+import { Point } from 'ol/geom';
 
+import VectorSource from 'ol/source/Vector';
+import {Vector as VectorLayer} from 'ol/layer/Vector';
+import {Circle as CircleStyle, Fill, Stroke, Style} from 'ol/style.js';
+*/
 export default {
-name: 'TestPage',
-
-setup() {
-      // 2. target element 변수에 담기
-      const map = ref(null);
-      // 3. Map 객체 담을 변수 선언
-      let olMap;
-      // 4. 지도 중심좌표
-      const center = fromLonLat([126.9251405697578, 37.53033241217628])
-      // 5. OlMap 객체 생성 및 타겟 엘리먼트에 부착
-      onMounted(() => {
-          olMap = new OlMap({
-              target: map.value,
-              layers: [new OlLayerTile({ source: new OSM() })],
-              view: new OlView({
-                  center: center, // 여의도 좌표
-                  zoom: 17,
-              }),
-          })          
+  name: 'MainMap',
+  data() {
+    return {
+      olMap: undefined,
+      positionObj : {},
+      isPostionReady : false,
+      lonlet : [127.07000046194874, 37.06499508020727]
+    }
+  },
+  mounted() {
+    this.olMap = new OlMap({
+      target: this.$refs.map,
+      layers: [
+          new OlLayerTile({
+            source: new OSM()
+          })
+      ],
+      view: new OlView({
+        center: fromLonLat([127.07000046194874, 37.06499508020727]), // 경기도 성남
+        zoom: 18
       })
-      // 6. onMounted에서 접근하기 위해 return
-      return { olMap }
-},
+    })
+  },
+  methods: {
+    getCurrentPosition(){
+      if(!navigator.geolocation) {
+        this.setAlert('위치 정보 찾을 수 없음 1')
+      } else {
+        navigator.geolocation.getCurrentPosition(this.getPositionValue, this.geolocationError)
+      }
+    },
+    getPositionValue (val) {
+      this.positionObj.latitude = val.coords.latitude
+      this.positionObj.longitude = val.coords.longitude
+      this.isPostionReady = true
+      this.setAlert('주소 정보 확인')
+    },
+    geolocationError() {
+      this.setAlert('위치정보 찾을 수 없음 2')
+    },
+    setAlert(text) {
+      alert(text)
+    },
+    centerAlert(){
+      alert(this.olMap.getView().getCenter());
+    }
+    ,
+    transferLonlat(long,lat) {
+      alert('치환 작동')
+      this.lonlet = fromLonLat([long, lat])
+      console.log('-----');
+      console.log(this.olMap.getView());
+      let newLonlat = [long, lat];      
+      let test = [127.07000046194874, 37.06499508020727]
+      console.log(fromLonLat(newLonlat));
+      console.log(test)
+      this.olMap.getView().setCenter(fromLonLat(newLonlat));
+/*
+      const pointFeature = new Feature({ 
+        geometry : new Point(fromLonLat(this.lonlet)),
+        type : "Ponit"
+      })
+
+      const styles = {
+        Point : new Style ({
+          image: new CircleStyle({
+            radius: 10,
+            fill : new Fill({ color: [160, 51, 255, 1] }),            
+            stroke : new Stroke({
+              color : [160, 51, 255, 1],
+              width : 0.1,
+            })
+          })
+        })
+      }
+
+      const vectorSource = new VectorSource({
+        features : pointFeature
+      })
+
+      const vectorLayer = new VectorLayer({
+        source : vectorSource,
+        style: (feature) => styles[feature.getProperties().type]
+      })
+
+      this.map.add(vectorLayer)
+*/
+    }
+  }
 }
 </script>
 
 <style scoped>
-.map__wrapper {
-width: 100%;
-height: 100%;
-display: flex;
-flex-direction: column;
-align-items: center;
+.main-map {
+  width: 100%;
+  height: 100%;
 }
-.map {
-width: 100%;
-height: 100%;
+.wrapper{
+  width: 100%;
+  height: 100%;
+}
+.side-nav{
+  width: 200px;
+  height: 100%;
+  position: absolute;
+  background-color: white;
+  z-index: 999;
 }
 </style>
