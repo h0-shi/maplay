@@ -89,6 +89,7 @@ export default {
       this.lonlet = fromLonLat([long, lat])
       console.log('-----');
       console.log(this.olMap);
+      this.olMap.
 /*
       const pointFeature = new Feature({ 
         geometry : new Point(fromLonLat(this.lonlet)),
